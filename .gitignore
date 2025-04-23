@@ -1,0 +1,8 @@
+/build/
+/dist/
+/mpy_cross.egg-info/
+*.whl
+/.eggs/
+/.idea/
+/usage.txt
+mpy_cross/archive

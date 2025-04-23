@@ -1,0 +1,381 @@
+image: "python:3"
+
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
+stages:
+  - binaries
+  - usage
+  - wheels
+  - pages
+  - release-binaries
+  - release
+  - update
+
+###########
+# Platforms
+###########
+
+.osx: &osx
+  variables:
+    PLATFORM_TAG: "macosx_11_0_universal2"
+    CFLAGS_EXTRA: "-static -Wno-unused-but-set-variable -Wno-array-bounds"
+
+.win_i386: &win_i386
+  variables:
+    CROSS_TRIPLE: "i686-w64-mingw32"
+    PLATFORM_TAG: "win32"
+    EXT: ".exe"
+    CRS: "/usr/bin/crossbuild "
+
+.win_x86_64: &win_x86_64
+  variables:
+    CROSS_TRIPLE: "x86_64-w64-mingw32"
+    PLATFORM_TAG: "win_amd64"
+    EXT: ".exe"
+    CRS: "/usr/bin/crossbuild "
+
+.linux_x86_64: &linux_x86_64
+  variables:
+    PLATFORM_TAG: "manylinux1_x86_64"
+
+.linux_i686: &linux_i686
+  variables:
+    PLATFORM_TAG: "manylinux1_i686"
+    CRS: "linux32 "
+
+.linux_armv7l: &linux_armv7l
+  variables:
+    CROSS_TRIPLE: "arm-linux-gnueabihf"
+    PLATFORM_TAG: "manylinux2014_armv7l"
+    CRS: "/usr/bin/crossbuild "
+
+.linux_aarch64: &linux_aarch64
+  variables:
+    CROSS_TRIPLE: "aarch64-linux-gnu"
+    PLATFORM_TAG: "manylinux2014_aarch64"
+  before_script:
+    - unset CPP
+
+#################
+# Build mpy-cross
+#################
+
+.build: &build
+  script:
+    - ${CRS}make -C micropython/mpy-cross
+    - |
+      mv micropython/mpy-cross/build/mpy-cross${EXT} ./mpy-cross${EXT} || \
+      mv micropython/mpy-cross/mpy-cross${EXT} ./mpy-cross${EXT} || \
+      mv micropython/mpy-cross/mpy-cross ./mpy-cross${EXT}
+    - file ./mpy-cross${EXT}
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - mpy-cross${EXT}
+  except:
+    - schedules
+  allow_failure: true
+
+mpy_cross:osx:
+  image: "$CI_REGISTRY/alelec/gitlab-osxcross"
+  stage: binaries
+  <<: *build
+  script:
+    # Override default script to build for both arm64 (apple silicon) and x86_64 (intel) then merge them
+    - CROSS_ARM=arm64-apple-darwin22.2
+    - CC=${CROSS_ARM}-clang
+    - SIZE=${CROSS_ARM}-size
+    # Disable strip as it breaks code signing performed automatically by clang
+    - STRIP=echo
+    # micropython switches build to macos settings if UNAME_S=Darwin
+    # However there's no way to override tool names for cross compiling, so patch Makefile manually
+    - sed -r "s:CC = clang:CC = $CC\nSTRIP = $STRIP\nSIZE = $SIZE:g" micropython/mpy-cross/Makefile > micropython/mpy-cross/Makefile.cross
+    - make -j4 -C micropython/mpy-cross -f Makefile.cross CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" UNAME_S=Darwin || true
+    - |
+      mv micropython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_ARM} || \
+      mv micropython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_ARM} || true
+      
+    - make -C micropython/mpy-cross clean
+    - CROSS_INTEL=x86_64-apple-darwin22.2
+    - CC=${CROSS_INTEL}-clang
+    - STRIP=echo
+    - SIZE=${CROSS_INTEL}-size
+    - sed -r "s:CC = clang:CC = $CC\nSTRIP = $STRIP\nSIZE = $SIZE:g" micropython/mpy-cross/Makefile > micropython/mpy-cross/Makefile.cross;
+    - make -j4 -C micropython/mpy-cross -f Makefile.cross CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" UNAME_S=Darwin
+    - |
+      mv micropython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_INTEL} || \
+      mv micropython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_INTEL}
+ 
+    - |
+      if [ -x mpy-cross-${CROSS_ARM} ]; then
+      lipo mpy-cross-${CROSS_ARM} mpy-cross-${CROSS_INTEL} -create -output mpy-cross
+      else 
+      mv mpy-cross-${CROSS_INTEL} mpy-cross
+      fi
+    - file mpy-cross
+  <<: *osx
+
+mpy_cross:win_i386:
+  image: "$CI_REGISTRY/alelec/gitlab-crossbuild"
+  stage: binaries
+  <<: *win_i386
+  <<: *build
+
+mpy_cross:win_x86_64:
+  image: "$CI_REGISTRY/alelec/gitlab-crossbuild"
+  stage: binaries
+  <<: *win_x86_64
+  <<: *build
+
+mpy_cross:linux_x86_64:
+  image: "quay.io/pypa/manylinux1_x86_64"
+  stage: binaries
+  before_script:
+    - export PATH="/opt/python/cp35-cp35m/bin:${PATH}"
+  <<: *linux_x86_64
+  <<: *build
+
+mpy_cross:linux_i686:
+  image: "quay.io/pypa/manylinux1_i686"
+  stage: binaries
+  before_script:
+    - export PATH="/opt/python/cp35-cp35m/bin:${PATH}"
+  <<: *linux_i686
+  <<: *build
+
+mpy_cross:linux_armv7l:
+  image: "$CI_REGISTRY/alelec/gitlab-crossbuild"
+  stage: binaries
+  <<: *linux_armv7l
+  <<: *build
+
+mpy_cross:linux_aarch64:
+  image: "dockcross/linux-arm64-lts"
+  stage: binaries
+  <<: *linux_aarch64
+  <<: *build
+
+archive: 
+  stage: binaries
+  image: python:3.10
+  script: 
+    - pip install git+https://gitlab.com/alelec/gitlab-download-artifacts.git
+    - |
+      for VERS in $(python3 mpy_cross/versions.py); do
+      echo "Downloading ${PLATFORM} @ ${VERS}"
+      mkdir -p mpy_cross/archive/${VERS}
+      gitlab-download-artifacts https://gitlab.com/alelec/mpy_cross@${VERS} mpy_cross:${PLATFORM} || true
+      mv mpy-cross* mpy_cross/archive/${VERS}/ || true
+      done
+    # the oldest vetsions aten't available on all platforms 
+    # assert that we've got most of them at least
+    - downloaded=$(find mpy_cross/archive -type f | wc -l)
+    - |
+      [[ $PLATFORM = "osx" ]] && REQUIRED=3 || REQUIRED=4
+      [[ $downloaded -gt $REQUIRED ]] || (echo "FAIL: only found $downloaded versions"; exit 1)
+  artifacts:
+    expire_in: 1 days
+    paths:
+      - mpy_cross/archive
+  except:
+    - schedules
+  parallel:
+    matrix:
+        - PLATFORM:
+           - osx
+           - win_i386
+           - win_x86_64
+           - linux_x86_64
+           - linux_i686
+           - linux_armv7l
+           - linux_aarch64
+          
+
+################
+check_versions:
+  stage: usage
+  dependencies: ["mpy_cross:linux_x86_64"]
+  script:
+    - |
+      CURR=$(./mpy-cross --version | sed -E 's:.*emitting mpy v([0-9\.]+):\1:g')
+      SUPPORT=$(python mpy_cross/versions.py -b)
+      echo " $SUPPORT " | grep -q " $CURR " || (echo "ERROR: current bytecode ($CURR) missing from versions.py"; exit 1)
+  except:
+    - schedules
+
+
+################
+# Snapshot Usage
+################
+usage:
+  stage: usage
+  dependencies: ["mpy_cross:linux_x86_64"]
+  script:
+    - mv mpy-cross mpy_cross
+    - python -m mpy_cross --help > ./usage.txt
+  artifacts:
+    expire_in: 1 days
+    paths:
+      - ./usage.txt
+  except:
+    - schedules
+
+
+#####################
+# Package into wheels
+#####################
+
+.wheel: &wheel
+  script:
+    # The mv will fail if the matching build stage failed, 
+    # guaranteeing we don't get an empty wheel
+    - file mpy-cross${EXT}
+    - mv mpy-cross${EXT} ./mpy_cross/
+    - python -m pip install setuptools wheel
+    - python setup.py bdist_wheel --dist-dir . --usage usage.txt
+  artifacts:
+    expire_in: 8 days
+    paths:
+      - ./*.whl
+  except:
+    - schedules
+  allow_failure: true
+
+wheel:osx:
+  stage: wheels
+  dependencies: ["mpy_cross:osx", "archive: [osx]", "usage"]
+  <<: *osx
+  <<: *wheel
+
+wheel:win_i386:
+  stage: wheels
+  dependencies: ["mpy_cross:win_i386", "archive: [win_i386]", "usage"]
+  <<: *win_i386
+  <<: *wheel
+
+wheel:win_x86_64:
+  stage: wheels
+  dependencies: ["mpy_cross:win_x86_64", "archive: [win_x86_64]", "usage"]
+  <<: *win_x86_64
+  <<: *wheel
+
+wheel:linux_x86_64:
+  stage: wheels
+  dependencies: ["mpy_cross:linux_x86_64", "archive: [linux_x86_64]", "usage"]
+  <<: *linux_x86_64
+  <<: *wheel
+
+wheel:linux_i686:
+  stage: wheels
+  dependencies: ["mpy_cross:linux_i686", "archive: [linux_i686]", "usage"]
+  <<: *linux_i686
+  <<: *wheel
+
+wheel:linux_armv7l:
+  stage: wheels
+  dependencies: ["mpy_cross:linux_armv7l", "archive: [linux_armv7l]", "usage"]
+  <<: *linux_armv7l
+  <<: *wheel
+
+wheel:linux_aarch64:
+  stage: wheels
+  dependencies: ["mpy_cross:linux_aarch64", "archive: [linux_aarch64]", "usage"]
+  <<: *linux_aarch64
+  <<: *wheel
+  
+  
+pages:
+  stage: pages
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  script:
+    - mkdir ./public
+    - mv ./*.whl ./public/
+    - python -m pip install gitlab_tags_to_pip_index
+    - python -m gitlab_tags_to_pip_index --pre './public/*.whl' ./public
+  artifacts:
+    expire_in: 14 days
+    paths:
+    - public
+  only:
+    - tags
+  except:
+    - schedules
+
+
+.release-binary: &release-binary
+  stage: release-binaries
+  script:
+   # Upload the executables to the gitlab release page
+   - pip install gitlab_release
+   - arch=$(echo ${CI_JOB_NAME} | cut -d':' -f2)
+   - mv mpy-cross${EXT} mpy-cross-${CI_COMMIT_TAG}-${arch}${EXT}
+   - gitlab-release ./mpy-cross-* || (sleep 5; gitlab-release ./mpy-cross-*)
+  only:
+    - tags
+  allow_failure: true
+
+release:osx:
+  dependencies: ["mpy_cross:osx"]
+  <<: *osx
+  <<: *release-binary
+
+release:win_i386:
+  dependencies: ["mpy_cross:win_i386"]
+  <<: *win_i386
+  <<: *release-binary
+
+release:win_x86_64:
+  dependencies: ["mpy_cross:win_x86_64"]
+  <<: *win_x86_64
+  <<: *release-binary
+
+release:linux_x86_64:
+  dependencies: ["mpy_cross:linux_x86_64"]
+  <<: *linux_x86_64
+  <<: *release-binary
+
+release:linux_i686:
+  dependencies: ["mpy_cross:linux_i686"]
+  <<: *linux_i686
+  <<: *release-binary
+
+release:linux_armv7l:
+  dependencies: ["mpy_cross:linux_armv7l"]
+  <<: *linux_armv7l
+  <<: *release-binary
+
+release:linux_aarch64:
+  dependencies: ["mpy_cross:linux_aarch64"]
+  <<: *linux_aarch64
+  <<: *release-binary
+
+
+release:
+  stage: release
+  script:
+    - ls ./*.whl
+    # Upload to pypi
+    - pip install -U twine setuptools wheel gitlab_release
+    - for w in *.whl; do twine upload -u "$PYPI_USER" -p "$PYPI_PASS" $w || true; done
+    # Add to release page
+    - gitlab-release ./*.whl || (sleep 5; gitlab-release ./*.whl)
+  only:
+    - tags
+  except:
+    - schedules
+
+
+update:
+  stage: update
+  script:
+    - git config user.name "Andrew Leech"
+    - git config user.email "andrew@alelec.net"
+    - bash ./update.sh
+    - git remote set-url --push origin "https://gitlab.com/alelec/mpy_cross.git"
+    - git config credential.helper '!f() { sleep 1; echo "username=andrewleech\npassword=${PRIVATE_TOKEN}"; }; f'
+    - git push origin master
+    - git push --tags origin
+  only:
+    - schedules
