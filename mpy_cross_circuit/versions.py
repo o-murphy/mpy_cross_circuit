@@ -1,4 +1,4 @@
-# https://docs.micropython.org/en/latest/reference/mpyfiles.html
+# https://docs.circuitpython.org/en/latest/reference/mpyfiles.html
 __versions__ = [
     ("v1.23.0", "6.3"),
     ("v1.22.0", "6.2"),
@@ -22,18 +22,18 @@ def semver(ver: str):
     return sem[0:3]
 
 
-def mpy_version(micropython: str, bytecode: str):
+def mpy_version(circuitpython: str, bytecode: str):
     ret = None
-    if micropython:
+    if circuitpython:
         for ver, _ in __versions__:
-            if semver(micropython) >= semver(ver):
+            if semver(circuitpython) >= semver(ver):
                 ret = ver
                 break
     elif bytecode:
         ret =  __lookup.get(bytecode.lower().strip("v"))
     
     if not ret:
-        raise SystemExit(f"Error: Couldn't identify {micropython or bytecode} in known versions: \n{__versions__}")
+        raise SystemExit(f"Error: Couldn't identify {circuitpython or bytecode} in known versions: \n{__versions__}")
     return ret
 
 

@@ -12,7 +12,7 @@ post_version = os.environ.get('RE_RELEASE', 0)
 platform_tag = os.environ.get('PLATFORM_TAG', None)
 
 usage_template = """
-mpy-cross options
+mpy-cross-circuit options
 -----------------
  ::
 
@@ -30,7 +30,7 @@ if '--usage' in sys.argv:
         usage = usage_file.read()
 
     usage = usage.split('\n')
-    usage_0 = re.sub(r'^(usage:) .*(mpy-cross .*)$', r'\1 \2', usage[0])
+    usage_0 = re.sub(r'^(usage:) .*(mpy-cross-circuit .*)$', r'\1 \2', usage[0])
     usage = [usage_0] + usage[1:]
     usage_desc = usage_template + '\n'.join(('    %s' % line for line in usage))
 else:
@@ -56,8 +56,8 @@ with io.open('README.rst', encoding='utf8') as readme:
     long_description = readme.read() + usage_desc
 
 
-# The version consists of <wrapper_version>+<micropython_version> for mpy release
-# or <wrapper_version>+<micropython_git_hash> for master build
+# The version consists of <wrapper_version>+<circuitpython_version> for mpy release
+# or <wrapper_version>+<circuitpython_git_hash> for master build
 def version():
 
     def post_scheme(version):
@@ -75,26 +75,26 @@ def version():
 
     return {#'version_scheme': mpy_scheme,
             'local_scheme': post_scheme,
-            'root': 'micropython'}
+            'root': 'circuitpython'}
 
 setup(
-    name='mpy_cross',
+    name='mpy_cross_circuit',
     use_scm_version=version(),  # Generate version number from git commit/tags
-    description='micropython mpy-cross distribution',
+    description='circuitpython mpy-cross-circuit distribution',
     long_description=long_description,
-    url="https://gitlab.com/alelec/mpy_cross",
-    author="Damien George",
-    author_email="contact@micropython.org",
-    maintainer="Andrew Leech",
-    maintainer_email="andrew@alelec.net",
+    url="https://gitlab.com/o-murphy/mpy_cross_circuit",
+    author="Dmytro Yaroshenko",
+    author_email="thehelixpg@gmail.com",
+    maintainer="Dmytro Yaroshenko",
+    maintainer_email="thehelixpg@gmail.com",
     license='MIT',
-    packages=['mpy_cross'],
+    packages=['mpy_cross_circuit'],
     setup_requires=['setuptools_scm==3.5.0', 'wheel'],
-    package_data={'': ['mpy-cross*', 'archive/**']},
+    package_data={'': ['mpy-cross-circuit*', 'archive/**']},
     cmdclass={'bdist_wheel': bdist_wheel},
     entry_points = {
         'console_scripts': [
-            'mpy-cross=mpy_cross:main'
+            'mpy-cross-circuit=mpy_cross_circuit:main'
         ],
     },
 )

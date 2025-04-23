@@ -1,0 +1,62 @@
+name: Build mpy-cross
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build dependencies (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          sudo apt-get update || true
+          sudo apt-get install -y build-essential libffi-dev || true
+          make -C circuitpython/mpy-cross clean
+
+      - name: Install build dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install make
+          echo "You may need to adjust your Windows toolchain (MSVC or MinGW)"
+          make -C circuitpython/mpy-cross clean
+
+      - name: Build mpy-cross
+        run: |
+          make -C circuitpython/mpy-cross
+
+      - name: Upload mpy-cross artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpy-cross-${{ matrix.os }}
+          path: |
+            # Linux/macOS
+            circuitpython/mpy-cross/build/mpy-cross
+            # Windows
+            circuitpython/mpy-cross/build/mpy_cross.exe

@@ -7,29 +7,29 @@ from glob import glob
 from os.path import join, dirname, abspath
 from . import versions
 
-__all__ = ['mpy_cross', 'run']
+__all__ = ['mpy_cross_circuit', 'run']
 __pkg_dir = abspath(dirname(__file__))
 try:
-    mpy_cross = glob(os.path.join(__pkg_dir, 'mpy-cross*'))[0]
+    mpy_cross_circuit = glob(os.path.join(__pkg_dir, 'mpy-cross-circuit*'))[0]
 except IndexError:
-    raise SystemExit("Error: No mpy-cross binary found in: %s" % __pkg_dir)
+    raise SystemExit("Error: No mpy-cross-circuit binary found in: %s" % __pkg_dir)
 
 
-def set_version(micropython, bytecode):
-    global mpy_cross
-    vers = versions.mpy_version(micropython, bytecode)
-    path = join(__pkg_dir, 'archive', vers, 'mpy-cross*')
+def set_version(circuitpython, bytecode):
+    global mpy_cross_circuit
+    vers = versions.mpy_version(circuitpython, bytecode)
+    path = join(__pkg_dir, 'archive', vers, 'mpy-cross-circuit*')
     try:
-        mpy_cross = glob(path)[0]
+        mpy_cross_circuit = glob(path)[0]
     except IndexError:
-        raise SystemExit("Error: No mpy-cross binary found in: %s" % dirname(path))
+        raise SystemExit("Error: No mpy-cross-circuit binary found in: %s" % dirname(path))
     
 
 
 def fix_perms():
     try:
-        st = os.stat(mpy_cross)
-        os.chmod(mpy_cross, st.st_mode | stat.S_IEXEC)
+        st = os.stat(mpy_cross_circuit)
+        os.chmod(mpy_cross_circuit, st.st_mode | stat.S_IEXEC)
     except OSError:
         pass
 
@@ -43,13 +43,13 @@ def usage():
             break
         print(line, end="")
         if line.strip() == "Options:":
-            print("-c <version> : --compat <version> : Run mpy-cross in compatibility mode for given micropython version.")
-            print("-b <version> : --bytecode <version> : Output specific bytecode version for use with older micropython versions.")
+            print("-c <version> : --compat <version> : Run mpy-cross-circuit in compatibility mode for given circuitpython version.")
+            print("-b <version> : --bytecode <version> : Output specific bytecode version for use with older circuitpython versions.")
 
 
 def run(*args, **kwargs):
     fix_perms()
-    return subprocess.Popen([mpy_cross] + list(args), **kwargs)
+    return subprocess.Popen([mpy_cross_circuit] + list(args), **kwargs)
 
 
 def main():
