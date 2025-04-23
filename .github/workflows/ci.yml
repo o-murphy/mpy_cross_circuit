@@ -20,7 +20,10 @@ jobs:
 
       - name: sync
         run: |
-          git submodule update --init --depth 1 
+          git submodule update --init
+
+      - name: Install huffman
+        run: python -m pip install huffman
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
