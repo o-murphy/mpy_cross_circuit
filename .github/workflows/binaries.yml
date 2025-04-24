@@ -254,7 +254,8 @@ jobs:
       - name: Build mpy-cross for Intel macOS (x86_64)
         run: |
           make -C circuitpython/mpy-cross clean
-          export CROSS_INTEL=x86_64-apple-darwin22.2
+#          export CROSS_INTEL=x86_64-apple-darwin22.2
+          export CROSS_INTEL=x86_64-apple-darwin
           export CC=${CROSS_INTEL}-clang
           export SIZE=${CROSS_INTEL}-size
           export STRIP=echo
