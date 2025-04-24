@@ -75,7 +75,7 @@ jobs:
 
       # Upload the compiled artifact
       - name: Upload mpy-cross artifact (Windows)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-${{ matrix.arch }}-windows
           path: ./mpy-cross${EXT:-}
@@ -177,7 +177,7 @@ jobs:
 
       # Upload the compiled artifact
       - name: Upload mpy-cross artifact (Windows)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-${{ matrix.arch }}-windows
           path: ./mpy-cross${EXT:-}
@@ -267,7 +267,7 @@ jobs:
 
       # Upload the compiled artifact
       - name: Upload mpy-cross artifact (Windows)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-${{ matrix.arch }}-windows
           path: ./mpy-cross${EXT:-}
