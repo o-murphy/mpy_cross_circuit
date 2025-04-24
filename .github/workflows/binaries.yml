@@ -250,7 +250,7 @@ jobs:
 
 
       - name: Build circuitpython/mpy-cross (arm64)
-        run: make -C mpy-cross -j4 -f Makefile.m1 V=2
+        run: make -C circuitpython/mpy-cross -j4 -f Makefile.m1 V=2
 
       - uses: actions/upload-artifact@v4
         with:
