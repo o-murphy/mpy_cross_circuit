@@ -1,0 +1,249 @@
+name: Build mpy-cross
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-windows:
+    name: Build on windows
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ i686, x86_64 ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: sync
+        run: |
+          git submodule update --init
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install huffman
+        run: python -m pip install huffman
+
+      # Windows i386
+      - name: Set Windows i386 env
+        if: matrix.arch == 'i686'
+        run: |
+          echo "CROSS_TRIPLE=i686-w64-mingw32" >> $GITHUB_ENV
+          echo "PLATFORM_TAG=win32" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
+          echo "EXT=.exe" >> $GITHUB_ENV
+          echo "CRS=/usr/bin/crossbuild " >> $GITHUB_ENV
+
+      # Windows x86_64
+      - name: Set Windows x86_64 env
+        if: matrix.arch == 'x86_64'
+        run: |
+          echo "CROSS_TRIPLE=x86_64-w64-mingw32" >> $GITHUB_ENV
+          echo "PLATFORM_TAG=win_amd64" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
+          echo "EXT=.exe" >> $GITHUB_ENV
+          echo "CRS=/usr/bin/crossbuild " >> $GITHUB_ENV
+
+      # Debug output
+      - name: Print environment
+        run: |
+          echo "PLATFORM_TAG=$PLATFORM_TAG"
+          echo "CROSS_TRIPLE=$CROSS_TRIPLE"
+          echo "EXT=$EXT"
+          echo "CRS=$CRS"
+          echo "CFLAGS_EXTRA=$CFLAGS_EXTRA"
+
+      - name: Install build dependencies (Windows)
+        run: |
+          choco install make
+          echo "You may need to adjust your Windows toolchain (MSVC or MinGW)"
+          make -C circuitpython/mpy-cross clean
+
+      - name: Build mpy-cross (Windows/Linux)
+        run: |
+          ${CRS:-}make -C circuitpython/mpy-cross
+          mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
+          file ./mpy-cross${EXT:-}
+        continue-on-error: true  # same as allow_failure
+        shell: bash
+
+  build-linux:
+    name: Build on linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x86_64, i686, armv7l, aarch64 ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: sync
+        run: |
+          git submodule update --init
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install huffman
+        run: python -m pip install huffman
+
+      # Linux x86_64
+      - name: Set Linux x86_64 env
+        if: matrix.arch == 'x86_64'
+        run: |
+          echo "CROSS_TRIPLE=" >> $GITHUB_ENV
+          echo "PLATFORM_TAG=manylinux1_x86_64" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
+          echo "CRS=" >> $GITHUB_ENV
+          echo "EXT=" >> $GITHUB_ENV
+
+      # Linux i686
+      - name: Set Linux i686 env
+        if: matrix.arch == 'i686'
+        run: |
+          echo "CROSS_TRIPLE=" >> $GITHUB_ENV
+          echo "PLATFORM_TAG=manylinux1_i686" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
+          echo "CRS=linux32 " >> $GITHUB_ENV
+          echo "EXT=" >> $GITHUB_ENV
+
+      # Linux armv7l
+      - name: Set Linux armv7l env
+        if: matrix.arch == 'armv7l'
+        run: |
+          echo "CROSS_TRIPLE=arm-linux-gnueabihf" >> $GITHUB_ENV
+          echo "PLATFORM_TAG=manylinux2014_armv7l" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
+          echo "EXT=" >> $GITHUB_ENV
+          echo "CRS=/usr/bin/crossbuild " >> $GITHUB_ENV
+
+      # Linux aarch64
+      - name: Set Linux aarch64 env
+        if: matrix.arch == 'aarch64'
+        run: |
+          echo "CROSS_TRIPLE=aarch64-linux-gnu" >> $GITHUB_ENV
+          echo "PLATFORM_TAG=manylinux2014_aarch64" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
+          echo "EXT=" >> $GITHUB_ENV
+          echo "CRS=" >> $GITHUB_ENV
+          echo "UNSET_CPP=true" >> $GITHUB_ENV
+
+      # Debug output
+      - name: Print environment
+        run: |
+          echo "PLATFORM_TAG=$PLATFORM_TAG"
+          echo "CROSS_TRIPLE=$CROSS_TRIPLE"
+          echo "EXT=$EXT"
+          echo "CRS=$CRS"
+          echo "CFLAGS_EXTRA=$CFLAGS_EXTRA"
+
+      # Optional: Unset CPP if needed
+      - name: Unset CPP
+        if: env.UNSET_CPP == 'true'
+        run: unset CPP
+
+      - name: Install build dependencies (Linux)
+        run: |
+          sudo apt-get update || true
+          sudo apt-get install -y build-essential libffi-dev || true
+          make -C circuitpython/mpy-cross clean
+
+      - name: Build mpy-cross (Windows/Linux)
+        run: |
+          ${CRS:-}make -C circuitpython/mpy-cross
+          mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
+          file ./mpy-cross${EXT:-}
+        continue-on-error: true  # same as allow_failure
+        shell: bash
+
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x86_64, arm64 ]  # optional if you want platform + arch combos
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: sync
+        run: |
+          git submodule update --init
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install huffman
+        run: python -m pip install huffman
+
+      # macOS
+      - name: Set macOS env
+        run: |
+          echo "PLATFORM_TAG=macosx_11_0_universal2" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=-static -Wno-unused-but-set-variable -Wno-array-bounds" >> $GITHUB_ENV
+
+      # Debug output
+      - name: Print environment
+        run: |
+          echo "PLATFORM_TAG=$PLATFORM_TAG"
+          echo "CROSS_TRIPLE=$CROSS_TRIPLE"
+
+      - name: Install build dependencies (macOS)
+        run: |
+          brew update
+          brew install make libffi
+          make -C circuitpython/mpy-cross clean
+
+      - name: Build mpy-cross for Apple Silicon (arm64)
+        run: |
+          make -C circuitpython/mpy-cross clean
+          export CROSS_ARM=arm64-apple-darwin22.2
+          export CC=${CROSS_ARM}-clang
+          export SIZE=${CROSS_ARM}-size
+          export STRIP=echo
+          sed -r "s:CC = clang:CC = $CC\\nSTRIP = $STRIP\\nSIZE = $SIZE:g" circuitpython/mpy-cross/Makefile > circuitpython/mpy-cross/Makefile.cross
+          make -j4 -C circuitpython/mpy-cross -f Makefile.cross \
+            CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" \
+            UNAME_S=Darwin || true
+          mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_ARM} || \
+          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_ARM} || true
+
+      - name: Build mpy-cross for Intel macOS (x86_64)
+        run: |
+          make -C circuitpython/mpy-cross clean
+          export CROSS_INTEL=x86_64-apple-darwin22.2
+          export CC=${CROSS_INTEL}-clang
+          export SIZE=${CROSS_INTEL}-size
+          export STRIP=echo
+          sed -r "s:CC = clang:CC = $CC\\nSTRIP = $STRIP\\nSIZE = $SIZE:g" circuitpython/mpy-cross/Makefile > circuitpython/mpy-cross/Makefile.cross
+          make -j4 -C circuitpython/mpy-cross -f Makefile.cross \
+            CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" \
+            UNAME_S=Darwin
+          mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_INTEL} || \
+          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_INTEL}
+
+      - name: Combine with lipo into universal binary
+        run: |
+          if [ -x mpy-cross-arm64-apple-darwin22.2 ]; then
+            lipo mpy-cross-arm64-apple-darwin22.2 mpy-cross-x86_64-apple-darwin22.2 -create -output mpy-cross
+          else
+            mv mpy-cross-x86_64-apple-darwin22.2 mpy-cross
+          fi
+          file mpy-cross
