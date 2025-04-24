@@ -206,7 +206,6 @@ jobs:
 
       - name: Install build dependencies (macOS)
         run: |
-          xcode-select --install
           brew update
           brew install make libffi
           make -C circuitpython/mpy-cross clean
