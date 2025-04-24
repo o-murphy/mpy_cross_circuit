@@ -82,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-${{ matrix.arch }}-windows
-          path: ./mpy-cross${EXT:-}
+          path: ./mpy-cross${{ env.EXT }}
 
   build-linux:
     name: Build on linux
@@ -184,11 +184,11 @@ jobs:
           ls -alh ./mpy-cross* || echo "No mpy-cross files found"
 
       # Upload the compiled artifact
-      - name: Upload mpy-cross artifact (Windows)
+      - name: Upload mpy-cross artifact (Linux)
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ matrix.arch }}-windows
-          path: ./mpy-cross${EXT:-}
+          name: mpy-cross-${{ matrix.arch }}-linux
+          path: ./mpy-cross${{ env.EXT }}
 
   build-macos:
     name: Build on macOS
@@ -274,8 +274,8 @@ jobs:
           file mpy-cross
 
       # Upload the compiled artifact
-      - name: Upload mpy-cross artifact (Windows)
+      - name: Upload mpy-cross artifact (macOS)
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ matrix.arch }}-windows
-          path: ./mpy-cross${EXT:-}
+          name: mpy-cross-${{ matrix.arch }}-macos
+          path: ./mpy-cross${{ env.EXT }}
