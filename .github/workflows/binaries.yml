@@ -81,7 +81,7 @@ jobs:
       - name: Upload mpy-cross artifact (Windows)
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ matrix.arch }}-windows
+          name: mpy-cross-windows-${{ matrix.arch }}
           path: ./mpy-cross${{ env.EXT }}  # Use EXT environment variable
           retention-days: 8
 
@@ -188,16 +188,18 @@ jobs:
       - name: Upload mpy-cross artifact (Linux)
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ matrix.arch }}-linux
+          name: mpy-cross-linux-${{ matrix.arch }}
           path: ./mpy-cross${{ env.EXT }}
           retention-days: 8
 
   build-macos:
     name: Build on macOS
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        arch: [ x86_64, arm64 ]  # optional if you want platform + arch combos
+    runs-on: macos-13
+
+    # runs-on: macos-latest
+    # strategy:
+    #   matrix:
+    #     arch: [ x86_64, arm64 ]  # optional if you want platform + arch combos
 
     steps:
       - name: Checkout repository
@@ -216,18 +218,19 @@ jobs:
         run: python -m pip install huffman
 
       # macOS
-      - name: Set build environment
-        run: |
-          echo "PLATFORM_TAG=macosx_11_0_universal2" >> $GITHUB_ENV
-          echo "ARCH_FLAGS=-arch ${{ matrix.arch }}" >> $GITHUB_ENV
-          echo "CFLAGS_EXTRA=-Wno-unused-but-set-variable -Wno-array-bounds" >> $GITHUB_ENV
+      # - name: Set build environment
+      #   run: |
+      #     echo "PLATFORM_TAG=macosx_11_0_universal2" >> $GITHUB_ENV
+      #     echo "ARCH_FLAGS=-arch ${{ matrix.arch }}" >> $GITHUB_ENV
+      #     echo "ARCH_FLAGS=-arch ${{ matrix.arch }}" >> $GITHUB_ENV
+      #     echo "CFLAGS_EXTRA=-Wno-unused-but-set-variable -Wno-array-bounds" >> $GITHUB_ENV
 
       # Debug output
-      - name: Print environment
-        run: |
-          echo "ARCH=${{ matrix.arch }}"
-          echo "PLATFORM_TAG=${PLATFORM_TAG}"
-          echo "CFLAGS_EXTRA=${CFLAGS_EXTRA}"
+      # - name: Print environment
+      #   run: |
+      #     echo "ARCH=${{ matrix.arch }}"
+      #     echo "PLATFORM_TAG=${PLATFORM_TAG}"
+      #     echo "CFLAGS_EXTRA=${CFLAGS_EXTRA}"
 
       # Install build dependencies (macOS)
       - name: Install build dependencies (macOS)
@@ -236,50 +239,75 @@ jobs:
           sudo brew update || true  # Retry brew update step (ignore errors)
           make -C circuitpython/mpy-cross clean
 
-      # Build mpy-cross for Apple Silicon (arm64)
-      - name: Build mpy-cross for Apple Silicon (arm64)
-        run: |
-          make -C circuitpython/mpy-cross clean
-          export CROSS_ARM=arm64-apple-darwin22.2
-          export CC=${CROSS_ARM}-clang
-          export SIZE=${CROSS_ARM}-size
-          export STRIP=echo
-          sed -r "s:CC = clang:CC = $CC\\nSTRIP = $STRIP\\nSIZE = $SIZE:g" circuitpython/mpy-cross/Makefile > circuitpython/mpy-cross/Makefile.cross
-          make -j4 -C circuitpython/mpy-cross -f Makefile.cross \
-            CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" \
-            UNAME_S=Darwin || true
-          mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_ARM} || \
-          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_ARM} || true
+      - name: Build mpy-cross
+        run: make -C mpy-cross -j4
 
-      # Build mpy-cross for Intel macOS (x86_64)
-      - name: Build mpy-cross for Intel macOS (x86_64)
-        run: |
-          make -C circuitpython/mpy-cross clean
-          export CROSS_INTEL=x86_64-apple-darwin22.2
-          export CC=${CROSS_INTEL}-clang
-          export SIZE=${CROSS_INTEL}-size
-          export STRIP=echo
-          sed -r "s:CC = clang:CC = $CC\\nSTRIP = $STRIP\\nSIZE = $SIZE:g" circuitpython/mpy-cross/Makefile > circuitpython/mpy-cross/Makefile.cross
-          make -j4 -C circuitpython/mpy-cross -f Makefile.cross \
-            CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" \
-            UNAME_S=Darwin
-          mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_INTEL} || \
-          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_INTEL}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpy-cross-macos-x64
+          path: mpy-cross/build/mpy-cross
 
-      # Combine with lipo into universal binary
-      - name: Combine with lipo into universal binary
-        run: |
-          if [ -x mpy-cross-arm64-apple-darwin22.2 ]; then
-            lipo mpy-cross-arm64-apple-darwin22.2 mpy-cross-x86_64-apple-darwin22.2 -create -output mpy-cross
-          else
-            mv mpy-cross-x86_64-apple-darwin22.2 mpy-cross
-          fi
-          file mpy-cross
 
-      # Upload the compiled artifact
-      - name: Upload mpy-cross artifact (macOS)
+      - name: Build mpy-cross (arm64)
+        run: make -C mpy-cross -j4 -f Makefile.m1 V=2
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpy-cross-macos-arm64
+          path: mpy-cross/build-arm64/mpy-cross-arm64
+
+      - name: Make universal binary
+        run: lipo -create -output mpy-cross-macos-universal mpy-cross/build/mpy-cross mpy-cross/build-arm64/mpy-cross-arm64
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ matrix.arch }}-macos
-          path: ./mpy-cross${{ env.EXT }}
-          retention-days: 8
+          name: mpy-cross-macos-universal
+          path: mpy-cross-macos-universal
+
+#      # Build mpy-cross for Apple Silicon (arm64)
+#      - name: Build mpy-cross for Apple Silicon (arm64)
+#        run: |
+#          make -C circuitpython/mpy-cross clean
+#          export CROSS_ARM=arm64-apple-darwin22.2
+#          export CC=${CROSS_ARM}-clang
+#          export SIZE=${CROSS_ARM}-size
+#          export STRIP=echo
+#          sed -r "s:CC = clang:CC = $CC\\nSTRIP = $STRIP\\nSIZE = $SIZE:g" circuitpython/mpy-cross/Makefile > circuitpython/mpy-cross/Makefile.cross
+#          make -j4 -C circuitpython/mpy-cross -f Makefile.cross \
+#            CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" \
+#            UNAME_S=Darwin || true
+#          mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_ARM} || \
+#          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_ARM} || true
+#
+#      # Build mpy-cross for Intel macOS (x86_64)
+#      - name: Build mpy-cross for Intel macOS (x86_64)
+#        run: |
+#          make -C circuitpython/mpy-cross clean
+#          export CROSS_INTEL=x86_64-apple-darwin22.2
+#          export CC=${CROSS_INTEL}-clang
+#          export SIZE=${CROSS_INTEL}-size
+#          export STRIP=echo
+#          sed -r "s:CC = clang:CC = $CC\\nSTRIP = $STRIP\\nSIZE = $SIZE:g" circuitpython/mpy-cross/Makefile > circuitpython/mpy-cross/Makefile.cross
+#          make -j4 -C circuitpython/mpy-cross -f Makefile.cross \
+#            CFLAGS_EXTRA="-static -Wno-unused-but-set-variable -Wno-array-bounds" \
+#            UNAME_S=Darwin
+#          mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_INTEL} || \
+#          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_INTEL}
+#
+#      # Combine with lipo into universal binary
+#      - name: Combine with lipo into universal binary
+#        run: |
+#          if [ -x mpy-cross-arm64-apple-darwin22.2 ]; then
+#            lipo mpy-cross-arm64-apple-darwin22.2 mpy-cross-x86_64-apple-darwin22.2 -create -output mpy-cross
+#          else
+#            mv mpy-cross-x86_64-apple-darwin22.2 mpy-cross
+#          fi
+#          file mpy-cross
+#
+#      # Upload the compiled artifact
+#      - name: Upload mpy-cross artifact (macOS)
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: mpy-cross-${{ matrix.arch }}-macos
+#          path: ./mpy-cross${{ env.EXT }}
+#          retention-days: 8
