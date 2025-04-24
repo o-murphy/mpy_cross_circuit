@@ -186,66 +186,6 @@ jobs:
           path: circuitpython/mpy-cross/build/mpy-cross
           retention-days: 8
 
-  build-static:
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        mpy-cross: ["static", "static-aarch64", "static-mingw", "static-raspbian"]
-    env:
-      CP_VERSION: ${{ inputs.cp-version }}
-      EX_static-mingw: static.exe
-      OS_static: linux-amd64
-      OS_static-aarch64: linux-aarch64
-      OS_static-mingw: windows
-      OS_static-raspbian: linux-raspbian
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: sync
-        run: |
-          git submodule update --init  
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install huffman
-        run: python -m pip install huffman
-
-      - name: Install toolchain (aarch64)
-        if: matrix.mpy-cross == 'static-aarch64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Install toolchain (mingw)
-        if: matrix.mpy-cross == 'static-mingw'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
-
-      - name: Build mpy-cross.${{ matrix.mpy-cross }}
-        run: make -C circuitpython/mpy-cross -j4 -f Makefile.${{ matrix.mpy-cross }}
-
-      - name: Set output
-        env:
-          EX: ${{ env[format('EX_{0}', matrix.mpy-cross)] || matrix.mpy-cross }}
-          OS: ${{ env[format('OS_{0}', matrix.mpy-cross)] }}"
-        run: |
-          echo >> $GITHUB_ENV "EX=$EX"
-          echo >> $GITHUB_ENV "OS=$OS"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: circuitpython/mpy-cross.${{ env.EX }}
-          path: mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
-          retention-days: 8
-
   build-macos:
     name: Build on macOS
     runs-on: macos-13
@@ -303,4 +243,63 @@ jobs:
         with:
           name: mpy-cross-macos-universal
           path: mpy-cross-macos-universal
+          retention-days: 8
+
+  build-static:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        mpy-cross: ["static", "static-aarch64", "static-mingw", "static-raspbian"]
+    env:
+      EX_static-mingw: static.exe
+      OS_static: linux-amd64
+      OS_static-aarch64: linux-aarch64
+      OS_static-mingw: windows
+      OS_static-raspbian: linux-raspbian
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: sync
+        run: |
+          git submodule update --init
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install huffman
+        run: python -m pip install huffman
+
+      - name: Install toolchain (aarch64)
+        if: matrix.mpy-cross == 'static-aarch64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install toolchain (mingw)
+        if: matrix.mpy-cross == 'static-mingw'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
+      - name: Build mpy-cross.${{ matrix.mpy-cross }}
+        run: make -C circuitpython/mpy-cross -j4 -f Makefile.${{ matrix.mpy-cross }}
+
+      - name: Set output
+        env:
+          EX: ${{ env[format('EX_{0}', matrix.mpy-cross)] || matrix.mpy-cross }}
+          OS: ${{ env[format('OS_{0}', matrix.mpy-cross)] }}"
+        run: |
+          echo >> $GITHUB_ENV "EX=$EX"
+          echo >> $GITHUB_ENV "OS=$OS"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: circuitpython/mpy-cross.${{ env.EX }}
+          path: mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
           retention-days: 8
