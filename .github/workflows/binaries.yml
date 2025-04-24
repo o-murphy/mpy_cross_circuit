@@ -36,7 +36,7 @@ jobs:
           echo "PLATFORM_TAG=win32" | Out-File -Append -FilePath $env:GITHUB_ENV
           echo "CFLAGS_EXTRA=" | Out-File -Append -FilePath $env:GITHUB_ENV
           echo "EXT=.exe" | Out-File -Append -FilePath $env:GITHUB_ENV
-          echo "CRS=/usr/bin/crossbuild " | Out-File -Append -FilePath $env:GITHUB_ENV
+          # echo "CRS=" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       # Set Windows x86_64 environment
       - name: Set Windows x86_64 env
@@ -46,7 +46,7 @@ jobs:
           echo "PLATFORM_TAG=win_amd64" | Out-File -Append -FilePath $env:GITHUB_ENV
           echo "CFLAGS_EXTRA=" | Out-File -Append -FilePath $env:GITHUB_ENV
           echo "EXT=.exe" | Out-File -Append -FilePath $env:GITHUB_ENV
-          echo "CRS=/usr/bin/crossbuild " | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CRS=" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       # Debug output
       - name: Print environment
