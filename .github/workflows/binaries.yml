@@ -83,6 +83,7 @@ jobs:
         with:
           name: mpy-cross-${{ matrix.arch }}-windows
           path: ./mpy-cross${{ env.EXT }}
+          retention-days: 8
 
   build-linux:
     name: Build on linux
@@ -189,6 +190,7 @@ jobs:
         with:
           name: mpy-cross-${{ matrix.arch }}-linux
           path: ./mpy-cross${{ env.EXT }}
+          retention-days: 8
 
   build-macos:
     name: Build on macOS
@@ -279,3 +281,4 @@ jobs:
         with:
           name: mpy-cross-${{ matrix.arch }}-macos
           path: ./mpy-cross${{ env.EXT }}
+          retention-days: 8
