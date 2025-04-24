@@ -73,6 +73,13 @@ jobs:
         continue-on-error: true  # same as allow_failure
         shell: bash
 
+      # Upload the compiled artifact
+      - name: Upload mpy-cross artifact (Windows)
+        uses: actions/upload-artifact@v3
+        with:
+          name: mpy-cross-${{ matrix.arch }}-windows
+          path: ./mpy-cross${EXT:-}
+
   build-linux:
     name: Build on linux
     runs-on: ubuntu-latest
@@ -168,6 +175,13 @@ jobs:
         continue-on-error: true  # same as allow_failure
         shell: bash
 
+      # Upload the compiled artifact
+      - name: Upload mpy-cross artifact (Windows)
+        uses: actions/upload-artifact@v3
+        with:
+          name: mpy-cross-${{ matrix.arch }}-windows
+          path: ./mpy-cross${EXT:-}
+
   build-macos:
     name: Build on macOS
     runs-on: macos-latest
@@ -250,3 +264,10 @@ jobs:
             mv mpy-cross-x86_64-apple-darwin22.2 mpy-cross
           fi
           file mpy-cross
+
+      # Upload the compiled artifact
+      - name: Upload mpy-cross artifact (Windows)
+        uses: actions/upload-artifact@v3
+        with:
+          name: mpy-cross-${{ matrix.arch }}-windows
+          path: ./mpy-cross${EXT:-}
