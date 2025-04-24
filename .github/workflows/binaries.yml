@@ -28,34 +28,34 @@ jobs:
       - name: Install huffman
         run: python -m pip install huffman
 
-      # Windows i386
+      # Set Windows i386 environment
       - name: Set Windows i386 env
         if: matrix.arch == 'i686'
         run: |
-          echo "CROSS_TRIPLE=i686-w64-mingw32" >> $GITHUB_ENV
-          echo "PLATFORM_TAG=win32" >> $GITHUB_ENV
-          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
-          echo "EXT=.exe" >> $GITHUB_ENV
-          echo "CRS=/usr/bin/crossbuild " >> $GITHUB_ENV
+          echo "CROSS_TRIPLE=i686-w64-mingw32" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "PLATFORM_TAG=win32" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CFLAGS_EXTRA=" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "EXT=.exe" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CRS=/usr/bin/crossbuild " | Out-File -Append -FilePath $env:GITHUB_ENV
 
-      # Windows x86_64
+      # Set Windows x86_64 environment
       - name: Set Windows x86_64 env
         if: matrix.arch == 'x86_64'
         run: |
-          echo "CROSS_TRIPLE=x86_64-w64-mingw32" >> $GITHUB_ENV
-          echo "PLATFORM_TAG=win_amd64" >> $GITHUB_ENV
-          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
-          echo "EXT=.exe" >> $GITHUB_ENV
-          echo "CRS=/usr/bin/crossbuild " >> $GITHUB_ENV
+          echo "CROSS_TRIPLE=x86_64-w64-mingw32" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "PLATFORM_TAG=win_amd64" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CFLAGS_EXTRA=" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "EXT=.exe" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CRS=/usr/bin/crossbuild " | Out-File -Append -FilePath $env:GITHUB_ENV
 
       # Debug output
       - name: Print environment
         run: |
-          echo "PLATFORM_TAG=$PLATFORM_TAG"
-          echo "CROSS_TRIPLE=$CROSS_TRIPLE"
-          echo "EXT=$EXT"
-          echo "CRS=$CRS"
-          echo "CFLAGS_EXTRA=$CFLAGS_EXTRA"
+          echo "PLATFORM_TAG=$env:PLATFORM_TAG"
+          echo "CROSS_TRIPLE=$env:CROSS_TRIPLE"
+          echo "EXT=$env:EXT"
+          echo "CRS=$env:CRS"
+          echo "CFLAGS_EXTRA=$env:CFLAGS_EXTRA"
 
       - name: Install build dependencies (Windows)
         run: |
@@ -82,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-${{ matrix.arch }}-windows
-          path: ./mpy-cross${{ env.EXT }}
+          path: ./mpy-cross${{ env.EXT }}  # Use EXT environment variable
           retention-days: 8
 
   build-linux:
