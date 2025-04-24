@@ -207,7 +207,7 @@ jobs:
       - name: Install build dependencies (macOS)
         run: |
           brew update
-          brew install make libffi
+          brew install clang make libffi
           make -C circuitpython/mpy-cross clean
 
       - name: Build mpy-cross for Apple Silicon (arm64)
