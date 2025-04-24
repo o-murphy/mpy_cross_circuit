@@ -216,17 +216,18 @@ jobs:
         run: python -m pip install huffman
 
       # macOS
-      - name: Set macOS env
+      - name: Set build environment
         run: |
           echo "PLATFORM_TAG=macosx_11_0_universal2" >> $GITHUB_ENV
-          echo "CFLAGS_EXTRA=-static -Wno-unused-but-set-variable -Wno-array-bounds" >> $GITHUB_ENV
-          export CC=clang
+          echo "ARCH_FLAGS=-arch ${{ matrix.arch }}" >> $GITHUB_ENV
+          echo "CFLAGS_EXTRA=-Wno-unused-but-set-variable -Wno-array-bounds" >> $GITHUB_ENV
 
       # Debug output
       - name: Print environment
         run: |
-          echo "PLATFORM_TAG=$PLATFORM_TAG"
-          echo "CROSS_TRIPLE=$CROSS_TRIPLE"
+          echo "ARCH=${{ matrix.arch }}"
+          echo "PLATFORM_TAG=${PLATFORM_TAG}"
+          echo "CFLAGS_EXTRA=${CFLAGS_EXTRA}"
 
       # Install build dependencies (macOS)
       - name: Install build dependencies (macOS)
@@ -254,8 +255,7 @@ jobs:
       - name: Build mpy-cross for Intel macOS (x86_64)
         run: |
           make -C circuitpython/mpy-cross clean
-          # export CROSS_INTEL=x86_64-apple-darwin22.2
-          export CROSS_INTEL=x86_64-apple-darwin
+          export CROSS_INTEL=x86_64-apple-darwin22.2
           export CC=${CROSS_INTEL}-clang
           export SIZE=${CROSS_INTEL}-size
           export STRIP=echo
