@@ -240,12 +240,13 @@ jobs:
           make -C circuitpython/mpy-cross clean
 
       - name: Build mpy-cross
-        run: make -C circuitpython/mpy-cross -j4
+        run: |
+          make -C circuitpython/mpy-cross -j4
 
       - uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-macos-x64
-          path: mpy-cross/build/mpy-cross
+          path: circuitpython/mpy-cross/build/mpy-cross
 
 
       - name: Build circuitpython/mpy-cross (arm64)
@@ -254,7 +255,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mpy-cross-macos-arm64
-          path: mpy-cross/build-arm64/mpy-cross-arm64
+          path: circuitpython/mpy-cross/build-arm64/mpy-cross-arm64
 
       - name: Make universal binary
         run: lipo -create -output mpy-cross-macos-universal mpy-cross/build/mpy-cross mpy-cross/build-arm64/mpy-cross-arm64
