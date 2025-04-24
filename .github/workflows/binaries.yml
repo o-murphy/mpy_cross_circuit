@@ -66,24 +66,30 @@ jobs:
       - name: Build mpy-cross (Windows)
         run: |
           ${CRS:-}make -C circuitpython/mpy-cross
-          mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
-          mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
-          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
-          file ./mpy-cross${EXT:-}
+          # mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          # mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          # mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
+          # file ./mpy-cross${EXT:-}
         continue-on-error: true  # same as allow_failure
         shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mpy-cross-windows-${{ matrix.arch }}
+          path: circuitpython/mpy-cross/build/mpy-cross${{ env.EXT }}
+          retention-days: 8
 
       - name: List files in the build directory
         run: |
           ls ./ || echo "No mpy-cross files found"
 
       # Upload the compiled artifact
-      - name: Upload mpy-cross artifact (Windows)
-        uses: actions/upload-artifact@v4
-        with:
-          name: mpy-cross-windows-${{ matrix.arch }}
-          path: ./mpy-cross${{ env.EXT }}  # Use EXT environment variable
-          retention-days: 8
+      # - name: Upload mpy-cross artifact (Windows)
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: mpy-cross-windows-${{ matrix.arch }}
+      #     path: ./mpy-cross${{ env.EXT }}  # Use EXT environment variable
+      #     retention-days: 8
 
   build-linux:
     name: Build on linux
@@ -180,7 +186,7 @@ jobs:
           path: circuitpython/mpy-cross/build/mpy-cross
           retention-days: 8
 
-  build:
+  build-static:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -223,7 +229,7 @@ jobs:
           sudo apt-get install -y mingw-w64
 
       - name: Build mpy-cross.${{ matrix.mpy-cross }}
-        run: make -C mpy-cross -j4 -f Makefile.${{ matrix.mpy-cross }}
+        run: make -C circuitpython/mpy-cross -j4 -f Makefile.${{ matrix.mpy-cross }}
 
       - name: Set output
         env:
@@ -236,8 +242,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross.${{ env.EX }}
+          name: circuitpython/mpy-cross.${{ env.EX }}
           path: mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
+          retention-days: 8
 
   build-macos:
     name: Build on macOS
