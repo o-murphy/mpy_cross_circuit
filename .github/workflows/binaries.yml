@@ -75,7 +75,7 @@ jobs:
 
       - name: List files in the build directory
         run: |
-          ls ./mpy-cross* || echo "No mpy-cross files found"
+          ls ./ || echo "No mpy-cross files found"
 
       # Upload the compiled artifact
       - name: Upload mpy-cross artifact (Windows)
