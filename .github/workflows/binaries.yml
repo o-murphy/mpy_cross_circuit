@@ -9,7 +9,6 @@ jobs:
     name: Build on windows
     runs-on: windows-latest
     strategy:
-      fail-fast: false
       matrix:
         arch: [ i686, x86_64 ]
 
@@ -78,7 +77,6 @@ jobs:
     name: Build on linux
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         arch: [ x86_64, i686, armv7l, aarch64 ]
 
@@ -157,6 +155,7 @@ jobs:
         run: |
           sudo apt-get update || true
           sudo apt-get install -y build-essential libffi-dev || true
+          sudo apt-get install -y crossbuild-essential
           make -C circuitpython/mpy-cross clean
 
       - name: Build mpy-cross (Windows/Linux)
@@ -173,7 +172,6 @@ jobs:
     name: Build on macOS
     runs-on: macos-latest
     strategy:
-      fail-fast: false
       matrix:
         arch: [ x86_64, arm64 ]  # optional if you want platform + arch combos
 
