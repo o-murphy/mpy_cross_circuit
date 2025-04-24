@@ -115,8 +115,6 @@ jobs:
           echo "CROSS_TRIPLE=" >> $GITHUB_ENV
           echo "PLATFORM_TAG=manylinux1_x86_64" >> $GITHUB_ENV
           echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
-          echo "CRS=" >> $GITHUB_ENV
-          echo "EXT=" >> $GITHUB_ENV
 
       # Linux i686
       - name: Set Linux i686 env
@@ -126,7 +124,6 @@ jobs:
           echo "PLATFORM_TAG=manylinux1_i686" >> $GITHUB_ENV
           echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
           echo "CRS=linux32 " >> $GITHUB_ENV
-          echo "EXT=" >> $GITHUB_ENV
 
       # Linux armv7l
       - name: Set Linux armv7l env
@@ -135,7 +132,6 @@ jobs:
           echo "CROSS_TRIPLE=arm-linux-gnueabihf" >> $GITHUB_ENV
           echo "PLATFORM_TAG=manylinux2014_armv7l" >> $GITHUB_ENV
           echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
-          echo "EXT=" >> $GITHUB_ENV
           echo "CRS=/usr/bin/crossbuild " >> $GITHUB_ENV
 
       # Linux aarch64
@@ -144,9 +140,6 @@ jobs:
         run: |
           echo "CROSS_TRIPLE=aarch64-linux-gnu" >> $GITHUB_ENV
           echo "PLATFORM_TAG=manylinux2014_aarch64" >> $GITHUB_ENV
-          echo "CFLAGS_EXTRA=" >> $GITHUB_ENV
-          echo "EXT=" >> $GITHUB_ENV
-          echo "CRS=" >> $GITHUB_ENV
           echo "UNSET_CPP=true" >> $GITHUB_ENV
 
       # Debug output
@@ -174,8 +167,8 @@ jobs:
         run: |
           ${CRS:-}make -C circuitpython/mpy-cross
           mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
-          mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
-          mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
+          # mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
+          # mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
           file ./mpy-cross${EXT:-}
         continue-on-error: true  # same as allow_failure
         shell: bash
@@ -258,7 +251,8 @@ jobs:
           path: circuitpython/mpy-cross/build-arm64/mpy-cross-arm64
 
       - name: Make universal binary
-        run: lipo -create -output mpy-cross-macos-universal mpy-cross/build/mpy-cross mpy-cross/build-arm64/mpy-cross-arm64
+        run: |
+          lipo -create -output mpy-cross-macos-universal circuitpython/mpy-cross/build/mpy-cross circuitpython/mpy-cross/build-arm64/mpy-cross-arm64
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
