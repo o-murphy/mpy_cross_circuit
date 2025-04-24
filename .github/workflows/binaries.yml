@@ -204,12 +204,14 @@ jobs:
           echo "PLATFORM_TAG=$PLATFORM_TAG"
           echo "CROSS_TRIPLE=$CROSS_TRIPLE"
 
+      # Install build dependencies (macOS)
       - name: Install build dependencies (macOS)
         run: |
           brew update
           brew install clang make libffi
           make -C circuitpython/mpy-cross clean
 
+      # Build mpy-cross for Apple Silicon (arm64)
       - name: Build mpy-cross for Apple Silicon (arm64)
         run: |
           make -C circuitpython/mpy-cross clean
@@ -224,6 +226,7 @@ jobs:
           mv circuitpython/mpy-cross/build/mpy-cross ./mpy-cross-${CROSS_ARM} || \
           mv circuitpython/mpy-cross/mpy-cross ./mpy-cross-${CROSS_ARM} || true
 
+      # Build mpy-cross for Intel macOS (x86_64)
       - name: Build mpy-cross for Intel macOS (x86_64)
         run: |
           make -C circuitpython/mpy-cross clean
