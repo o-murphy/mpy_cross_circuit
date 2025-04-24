@@ -63,7 +63,7 @@ jobs:
           echo "You may need to adjust your Windows toolchain (MSVC or MinGW)"
           make -C circuitpython/mpy-cross clean
 
-      - name: Build mpy-cross (Windows/Linux)
+      - name: Build mpy-cross (Windows)
         run: |
           ${CRS:-}make -C circuitpython/mpy-cross
           mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
@@ -158,7 +158,7 @@ jobs:
           sudo apt-get install crossbuild-essential-arm64
           make -C circuitpython/mpy-cross clean
 
-      - name: Build mpy-cross (Windows/Linux)
+      - name: Build mpy-cross (Linux)
         run: |
           ${CRS:-}make -C circuitpython/mpy-cross
           mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
