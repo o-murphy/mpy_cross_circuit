@@ -42,7 +42,7 @@ jobs:
           # Split the output into an array, handling potential newlines and extra spaces
           versions_array=($(echo "$versions" | tr -s ' '))
 
-          # Join the array elements with spaces
-          versions_string=$(IFS=' '; echo "${versions_array[*]}")
+          # Join the array elements with commas for JSON compatibility
+          versions_string=$(IFS=','; echo "${versions_array[*]}")
           echo "MPY_VERSIONS=$versions_string" >> $GITHUB_ENV
-          echo "::set-output name=all_versions::$versions_string"
+          echo "::set-output name=all_versions::[$versions_string]"
