@@ -37,7 +37,6 @@ jobs:
   build-windows:
     name: Build on windows
     runs-on: windows-latest
-    continue-on-error: true
     needs: cp_versions
     strategy:
       matrix:

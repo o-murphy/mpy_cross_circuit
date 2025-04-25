@@ -1,15 +1,17 @@
 import os
 import shutil
-import json
 import subprocess
-import sys  # Import the sys module
+from pathlib import Path
+from mpy_cross_circuit.versions import versions
 
-versions_json = os.environ.get('VERSIONS', '[]')
-versions = json.loads(versions_json)
 runner_os = os.environ.get('RUNNER_OS')
 arch = os.environ.get('ARCH')
 ext = os.environ.get('EXT', '')
 crs = os.environ.get('CRS', '')
+
+os.chdir(
+    Path(__file__).parent.parent
+)
 
 if runner_os == 'Windows':
     make_command = 'make'
