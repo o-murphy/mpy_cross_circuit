@@ -40,7 +40,7 @@ jobs:
             exit 1
           fi
           # Split the output into an array, handling potential newlines and extra spaces
-          versions_array=($(echo "$versions" | tr -s ' '))
+          versions_array=($(echo "$versions" | tr -s " "))
 
           # Join the array elements with commas for JSON compatibility
           versions_string=$(IFS=','; echo "${versions_array[*]}")
