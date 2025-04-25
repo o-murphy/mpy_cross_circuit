@@ -1,0 +1,128 @@
+name: Build mpy-cross (test)
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  cp_versions:
+    name: Collect actual versions
+    runs-on: ubuntu-latest
+    outputs:
+      all_versions: ${{ steps.get_cp_versions.outputs.all_versions }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies (semver)
+        run: |
+          pip install semver
+
+      - name: Determine mpy-cross versions
+        id: get_cp_versions
+        run: |
+          # Use the updated versions.py script
+          versions=$(python mpy_cross_circuit/versions.py --json) # Get JSON output
+          echo "Raw output: $versions"
+          echo "::set-output name=all_versions::$versions" # Pass the raw JSON string
+          echo "MPY_VERSIONS=$versions" >> $GITHUB_ENV # set the env
+
+
+  build-windows:
+    name: Build on windows
+    runs-on: windows-latest
+    continue-on-error: true
+    needs: cp_versions
+    strategy:
+      matrix:
+        arch: [ i686, x86_64 ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install huffman
+        run: python -m pip install huffman
+
+      # Set Windows i386 environment
+      - name: Set Windows i386 env
+        if: matrix.arch == 'i686'
+        run: |
+          echo "CROSS_TRIPLE=i686-w64-mingw32" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "PLATFORM_TAG=win32" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CFLAGS_EXTRA=" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "EXT=.exe" | Out-File -Append -FilePath $env:GITHUB_ENV
+          # echo "CRS=" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+      # Set Windows x86_64 environment
+      - name: Set Windows x86_64 env
+        if: matrix.arch == 'x86_64'
+        run: |
+          echo "CROSS_TRIPLE=x86_64-w64-mingw32" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "PLATFORM_TAG=win_amd64" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CFLAGS_EXTRA=" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "EXT=.exe" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "CRS=" | Out-File -Append -FilePath $env:GITHUB_ENV
+
+      # Debug output
+      - name: Print environment
+        run: |
+          echo "PLATFORM_TAG=$env:PLATFORM_TAG"
+          echo "CROSS_TRIPLE=$env:CROSS_TRIPLE"
+          echo "EXT=$env:EXT"
+          echo "CRS=$env:CRS"
+          echo "CFLAGS_EXTRA=$env:CFLAGS_EXTRA"
+
+      - name: Install build dependencies (Windows)
+        run: |
+          choco install make
+          echo "You may need to adjust your Windows toolchain (MSVC or MinGW)"
+
+      - name: Get CircuitPython versions
+        id: get_versions
+        run: echo "VERSIONS=${{ needs.cp_versions.outputs.all_versions }}" >> "$GITHUB_ENV"
+
+      - name: Build for each CircuitPython version
+        run: |
+          mkdir -p archive/windows/$ARCH # Create architecture-specific directory
+          $VERSIONS | jq -c '.[]' | while read -r version; do
+            echo "Building for CircuitPython version: $version"
+
+            # Create a directory for the current version
+            mkdir -p build_$version
+            cd build_$version
+
+            # Sync submodule to the specific version
+            git submodule update --init
+            cd ./circuitpython
+            git fetch origin "$version" --depth=1
+            git checkout "$version"
+            cd ..
+
+            # Build mpy-cross
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+              make -C ./circuitpython/mpy-cross clean
+              ${CRS:-}make -C ./circuitpython/mpy-cross
+              cp "./circuitpython/mpy-cross/build/mpy-cross${EXT:-}" "../archive/windows/$ARCH/$version/mpy-cross${EXT:-}"
+            fi
+
+            cd .. # Go back to the root directory
+          done
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mpy-cross-windows-${{ matrix.arch }}
+          path: archive/windows/${{ matrix.arch }}
+          retention-days: 8
