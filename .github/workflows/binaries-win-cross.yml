@@ -94,7 +94,7 @@ jobs:
         run: echo "VERSIONS=${{ needs.cp_versions.outputs.all_versions }}" >> "$GITHUB_ENV"
 
       - name: Build for each CircuitPython version
-        run: python scripts/build_and_copy.py
+        run: python scripts/build-many-windows.py
         env:
           VERSIONS: ${{ needs.cp_versions.outputs.all_versions }}
           RUNNER_OS: ${{ runner.os }}
