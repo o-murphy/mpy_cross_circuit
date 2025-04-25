@@ -1,9 +1,11 @@
+import json
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from mpy_cross_circuit.versions import versions
 
+versions_json = os.environ.get('VERSIONS', '[]')
+versions = json.loads(versions_json)
 runner_os = os.environ.get('RUNNER_OS')
 arch = os.environ.get('ARCH')
 ext = os.environ.get('EXT', '')
