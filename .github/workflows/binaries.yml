@@ -130,7 +130,7 @@ jobs:
     strategy:
       matrix:
         arch: [ x86_64, i686, armv7l, aarch64 ]
-        cp_version: ${{ fromJson(format('[{0}]', needs.cp_versions.outputs.all_versions)) }} # Corrected syntax
+        cp_version: ${{ fromJson(needs.cp_versions.outputs.all_versions) }} # Corrected syntax
 
     steps:
       - name: Checkout repository
