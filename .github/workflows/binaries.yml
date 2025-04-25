@@ -44,7 +44,7 @@ jobs:
           # Join the array elements with commas for JSON compatibility
           versions_string=$(IFS=','; echo "${versions_array[*]}")
           echo "MPY_VERSIONS=$versions_string" >> $GITHUB_ENV
-          echo "::set-output name=all_versions::[$versions_string]"
+          echo "::set-output name=all_versions::${versions_string}"
 
 
   build-windows:
@@ -54,7 +54,7 @@ jobs:
     strategy:
       matrix:
         arch: [ i686, x86_64 ]
-        cp_version: ${{ fromJson(format('[{0}]', needs.cp_versions.outputs.all_versions)) }} # Corrected syntax
+        cp_version: ${{ fromJson(format('[{0}]', replace(needs.cp_versions.outputs.all_versions, ',', '","'))) }} # Corrected syntax
 
     steps:
       - name: Checkout repository
