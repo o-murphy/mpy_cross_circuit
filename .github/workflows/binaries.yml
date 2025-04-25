@@ -51,8 +51,8 @@ jobs:
         run: |
           git submodule update --init --depth 1
           cd circuitpython
-          git fetch origin "${{ env.cp_version }}" --depth=1
-          git checkout "${{ env.cp_version }}"
+          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git checkout "${{ matrix.cp_version }}"
           cd ..
 
       - name: Set up Python
@@ -110,7 +110,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-windows-${{ env.cp_version }}-${{ matrix.arch }}${{ env.EXT }}
+          name: mpy-cross-windows-${{ matrix.cp_version }}-${{ matrix.arch }}${{ env.EXT }}
           # name: mpy-cross-windows-${{ matrix.arch }}
           path: circuitpython/mpy-cross/build/mpy-cross${{ env.EXT }}
           retention-days: 8
@@ -140,8 +140,8 @@ jobs:
         run: |
           git submodule update --init --depth 1
           cd circuitpython
-          git fetch origin "${{ env.cp_version }}" --depth=1
-          git checkout "${{ env.cp_version }}"
+          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git checkout "${{ matrix.cp_version }}"
           cd ..
 
       - name: Set up Python
@@ -220,7 +220,7 @@ jobs:
       - name: Upload mpy-cross artifact (Linux)
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-linux-${{ env.cp_version }}-${{ matrix.arch }}
+          name: mpy-cross-linux-${{ matrix.cp_version }}-${{ matrix.arch }}
           # name: mpy-cross-linux-${{ matrix.arch }}
           path: circuitpython/mpy-cross/build/mpy-cross
           retention-days: 8
@@ -242,8 +242,8 @@ jobs:
         run: |
           git submodule update --init --depth 1
           cd circuitpython
-          git fetch origin "${{ env.cp_version }}" --depth=1
-          git checkout "${{ env.cp_version }}"
+          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git checkout "${{ matrix.cp_version }}"
           cd ..
 
       - name: Set up Python
@@ -268,7 +268,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-macos-${{ env.cp_version }}-x64
+          name: mpy-cross-macos-${{ matrix.cp_version }}-x64
           # name: mpy-cross-macos-x64
           path: circuitpython/mpy-cross/build/mpy-cross
           retention-days: 8
@@ -279,7 +279,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-macos-${{ env.cp_version }}-arm64
+          name: mpy-cross-macos-${{ matrix.cp_version }}-arm64
           # name: mpy-cross-macos-arm64
           path: circuitpython/mpy-cross/build-arm64/mpy-cross-arm64
           retention-days: 8
@@ -292,7 +292,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-macos-${{ env.cp_version }}-universal
+          name: mpy-cross-macos-${{ matrix.cp_version }}-universal
           # name: mpy-cross-macos-universal
           path: mpy-cross-macos-universal
           retention-days: 8
@@ -321,8 +321,8 @@ jobs:
         run: |
           git submodule update --init --depth 1
           cd circuitpython
-          git fetch origin "${{ env.cp_version }}" --depth=1
-          git checkout "${{ env.cp_version }}"
+          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git checkout "${{ matrix.cp_version }}"
           cd ..
 
       - name: Set up Python
@@ -366,7 +366,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ env.OS }}-${{ env.cp_version }}.${{ env.EX }}
+          name: mpy-cross-${{ env.OS }}-${{ matrix.cp_version }}.${{ env.EX }}
           path: circuitpython/mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
           retention-days: 8
 
