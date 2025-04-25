@@ -95,9 +95,10 @@ jobs:
 
       - name: Build for each CircuitPython version
         run: |
-          mkdir -p archive/windows/$ARCH # Create architecture-specific directory
-          $VERSIONS | jq -c '.[]' | while read -r version; do
-            echo "Building for CircuitPython version: $version"
+          mkdir -p archive/windows/$env:ARCH # Create architecture-specific directory
+          $env:VERSIONS | ConvertFrom-Json | ForEach-Object {
+            $version = $_
+            Write-Host "Building for CircuitPython version: $version"
 
             # Create a directory for the current version
             mkdir -p build_$version
@@ -111,14 +112,15 @@ jobs:
             cd ..
 
             # Build mpy-cross
-            if [[ "$RUNNER_OS" == "Windows" ]]; then
+            if ($env:RUNNER_OS -eq "Windows") {
               make -C ./circuitpython/mpy-cross clean
               ${CRS:-}make -C ./circuitpython/mpy-cross
-              cp "./circuitpython/mpy-cross/build/mpy-cross${EXT:-}" "../archive/windows/$ARCH/$version/mpy-cross${EXT:-}"
-            fi
+              Copy-Item "./circuitpython/mpy-cross/build/mpy-cross${env:EXT}" "../archive/windows/$env:ARCH/$version/mpy-cross${env:EXT}" -Force
+            }
 
             cd .. # Go back to the root directory
-          done
+          }
+        shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
