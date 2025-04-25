@@ -28,7 +28,7 @@ jobs:
         id: get_cp_versions
         run: |
           # Call the function directly from a Python script.
-          versions=$(python -c "import sys; sys.path.append('.'); from mpy_cross_circuit import versions; print(' '.join(versions()))")
+          versions=$(python mpy_cross_circuit/versions.py)
           echo "MPY_VERSIONS=$versions" >> $GITHUB_ENV
           echo "::set-output name=all_versions::$versions" # Set output for other jobs
 
