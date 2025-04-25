@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 versions_json = os.environ.get('VERSIONS', '[]')
 versions = json.loads(versions_json)
 runner_os = os.environ.get('RUNNER_OS')
@@ -14,10 +15,9 @@ ext = os.environ.get('EXT', '')
 crs = os.environ.get('CRS', '')
 
 print(f"Initial working directory: {os.getcwd()}")
+root_dir: Path = Path(__file__).parent.parent
+os.chdir(root_dir)
 
-os.chdir(
-    Path(__file__).parent.parent
-)
 print(f"Working directory after initial change: {os.getcwd()}")
 
 if runner_os == 'Windows':
@@ -66,7 +66,6 @@ for version in versions:
         print(f"An unexpected error occurred while building version {version}: {e}")
         print(f"Continuing to the next version.")
 
-    for filename in glob.glob(os.path.join("archive", "windows", arch, version)):
-        print(filename)
+print((root_dir / "archive" / "windows").iterdir())
 
 print("Build process completed for all versions.")
