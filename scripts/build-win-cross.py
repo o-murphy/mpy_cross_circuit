@@ -1,4 +1,3 @@
-import glob
 import json
 import os
 import shutil
@@ -66,6 +65,6 @@ for version in versions:
         print(f"An unexpected error occurred while building version {version}: {e}")
         print(f"Continuing to the next version.")
 
-print((root_dir / "archive" / "windows").iterdir())
+[print(p) for p in (root_dir / "archive" / "windows").iterdir()]
 
 print("Build process completed for all versions.")
