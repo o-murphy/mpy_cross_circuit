@@ -1,3 +1,4 @@
+import json
 import re
 
 import semver
@@ -173,6 +174,8 @@ if __name__ == "__main__":
         print(
             " ".join(dict(__versions__).values())
         )
+    elif "--json" in sys.argv:
+        print(json.dumps(versions))
     else:
         print()
         print(
