@@ -27,10 +27,24 @@ jobs:
       - name: Determine mpy-cross versions
         id: get_cp_versions
         run: |
-          # Call the function directly from a Python script.
+          # Execute the script and capture the output
           versions=$(python mpy_cross_circuit/versions.py)
-          echo "MPY_VERSIONS=$versions" >> $GITHUB_ENV
-          echo "::set-output name=all_versions::$versions" # Set output for other jobs
+
+          # Print the raw output for debugging
+          echo "Raw output: $versions"
+
+          # Check if the output is empty
+          if [ -z "$versions" ]; then
+            echo "Error: No versions found by mpy_cross_circuit/versions.py"
+            exit 1
+          fi
+          # Split the output into an array, handling potential newlines and extra spaces
+          versions_array=($(echo "$versions" | tr -s ' '))
+
+          # Join the array elements with spaces
+          versions_string=$(IFS=' '; echo "${versions_array[*]}")
+          echo "MPY_VERSIONS=$versions_string" >> $GITHUB_ENV
+          echo "::set-output name=all_versions::$versions_string"
 
 
   build-windows:
