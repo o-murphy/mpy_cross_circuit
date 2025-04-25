@@ -1,0 +1,4 @@
+huffman
+semver
+boto3
+botocore

@@ -90,7 +90,7 @@ setup(
     license='MIT',
     packages=['mpy_cross_circuit'],
     setup_requires=['setuptools_scm==3.5.0', 'wheel'],
-    package_data={'': ['mpy-cross-circuit*', 'archive/**']},
+    package_data={'': ['mpy-cross*', 'archive/**']},
     cmdclass={'bdist_wheel': bdist_wheel},
     entry_points = {
         'console_scripts': [

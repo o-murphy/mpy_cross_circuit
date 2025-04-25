@@ -10,19 +10,19 @@ from . import versions
 __all__ = ['mpy_cross_circuit', 'run']
 __pkg_dir = abspath(dirname(__file__))
 try:
-    mpy_cross_circuit = glob(os.path.join(__pkg_dir, 'mpy-cross-circuit*'))[0]
+    mpy_cross_circuit = glob(os.path.join(__pkg_dir, 'mpy-cross*'))[0]
 except IndexError:
-    raise SystemExit("Error: No mpy-cross-circuit binary found in: %s" % __pkg_dir)
+    raise SystemExit("Error: No mpy-cross binary found in: %s" % __pkg_dir)
 
 
 def set_version(circuitpython, bytecode):
     global mpy_cross_circuit
     vers = versions.mpy_version(circuitpython, bytecode)
-    path = join(__pkg_dir, 'archive', vers, 'mpy-cross-circuit*')
+    path = join(__pkg_dir, 'archive', vers, 'mpy-cross*')
     try:
         mpy_cross_circuit = glob(path)[0]
     except IndexError:
-        raise SystemExit("Error: No mpy-cross-circuit binary found in: %s" % dirname(path))
+        raise SystemExit("Error: No mpy-cross binary found in: %s" % dirname(path))
     
 
 
@@ -43,7 +43,7 @@ def usage():
             break
         print(line, end="")
         if line.strip() == "Options:":
-            print("-c <version> : --compat <version> : Run mpy-cross-circuit in compatibility mode for given circuitpython version.")
+            print("-c <version> : --compat <version> : Run mpy-cross in compatibility mode for given circuitpython version.")
             print("-b <version> : --bytecode <version> : Output specific bytecode version for use with older circuitpython versions.")
 
 

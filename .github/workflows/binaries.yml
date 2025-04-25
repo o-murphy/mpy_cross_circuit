@@ -5,20 +5,47 @@ on:
 
 jobs:
 
-  build-windows:
-    name: Build on windows
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [ i686, x86_64 ]
+  get_cp_versions:
+    name: Collect actual versions
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: sync
+      - name: Install dependencies
         run: |
-          git submodule update --init
+          pip install -r requirements-dev.txt
+
+      - name: Determine mpy-cross versions
+        id: get_cp_versions
+        run: |
+          # Call the function directly from a Python script and split the output.
+          versions=$(python -m mpy_cross_circuit.versions)
+          echo "MPY_VERSIONS=$versions" >> $GITHUB_ENV
+          echo "::set-output name=all_versions::$versions" # Set output for other jobs
+
+
+  build-windows:
+    name: Build on windows
+    runs-on: windows-latest
+    needs: get_cp_versions
+    strategy:
+      matrix:
+        arch: [ i686, x86_64 ]
+        cp-version: ${{fromJson(steps.get_cp_versions.outputs.all_versions)}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync submodule to mpy_version
+        run: |
+          git submodule update --init --depth 1
+          cd circuitpython
+          git fetch origin "${{ env.cp-version }}" --depth=1
+          git checkout "${{ env.cp-version }}"
+          cd ..
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -75,13 +102,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-windows-${{ matrix.arch }}
+          name: mpy-cross-windows-${{ env.cp-version }}-${{ matrix.arch }}${{ env.EXT }}
+          # name: mpy-cross-windows-${{ matrix.arch }}
           path: circuitpython/mpy-cross/build/mpy-cross${{ env.EXT }}
           retention-days: 8
-
-      - name: List files in the build directory
-        run: |
-          ls ./ || echo "No mpy-cross files found"
 
       # Upload the compiled artifact
       # - name: Upload mpy-cross artifact (Windows)
@@ -94,17 +118,23 @@ jobs:
   build-linux:
     name: Build on linux
     runs-on: ubuntu-latest
+    needs: get_cp_versions
     strategy:
       matrix:
         arch: [ x86_64, i686, armv7l, aarch64 ]
+        cp-version: ${{fromJson(steps.get_cp_versions.outputs.all_versions)}}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: sync
+      - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init
+          git submodule update --init --depth 1
+          cd circuitpython
+          git fetch origin "${{ env.cp-version }}" --depth=1
+          git checkout "${{ env.cp-version }}"
+          cd ..
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -182,21 +212,31 @@ jobs:
       - name: Upload mpy-cross artifact (Linux)
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-linux-${{ matrix.arch }}
+          name: mpy-cross-linux-${{ env.cp-version }}-${{ matrix.arch }}
+          # name: mpy-cross-linux-${{ matrix.arch }}
           path: circuitpython/mpy-cross/build/mpy-cross
           retention-days: 8
 
   build-macos:
     name: Build on macOS
     runs-on: macos-13
+    needs: get_cp_versions
+    strategy:
+      matrix:
+        arch: [ x86_64, arm64 ]
+        cp-version: ${{fromJson(steps.get_cp_versions.outputs.all_versions)}}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: sync
+      - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init
+          git submodule update --init --depth 1
+          cd circuitpython
+          git fetch origin "${{ env.cp-version }}" --depth=1
+          git checkout "${{ env.cp-version }}"
+          cd ..
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -220,7 +260,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-macos-x64
+          name: mpy-cross-macos-${{ env.cp-version }}-x64
+          # name: mpy-cross-macos-x64
           path: circuitpython/mpy-cross/build/mpy-cross
           retention-days: 8
 
@@ -230,7 +271,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-macos-arm64
+          name: mpy-cross-macos-${{ env.cp-version }}-arm64
+          # name: mpy-cross-macos-arm64
           path: circuitpython/mpy-cross/build-arm64/mpy-cross-arm64
           retention-days: 8
 
@@ -238,20 +280,24 @@ jobs:
       - name: Make universal binary
         run: |
           lipo -create -output mpy-cross-macos-universal circuitpython/mpy-cross/build/mpy-cross circuitpython/mpy-cross/build-arm64/mpy-cross-arm64
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-macos-universal
+          name: mpy-cross-macos-${{ env.cp-version }}-universal
+          # name: mpy-cross-macos-universal
           path: mpy-cross-macos-universal
           retention-days: 8
 
   build-static:
     name: Build static
     runs-on: ubuntu-24.04
+    needs: get_cp_versions
     strategy:
       fail-fast: false
       matrix:
-        mpy-cross: ["static", "static-aarch64", "static-mingw", "static-raspbian"]
+        mpy-cross: [ "static", "static-aarch64", "static-mingw", "static-raspbian" ]
+        cp-version: ${{fromJson(steps.get_cp_versions.outputs.all_versions)}}
     env:
       EX_static-mingw: static.exe
       OS_static: linux-amd64
@@ -263,9 +309,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: sync
+      - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init
+          git submodule update --init --depth 1
+          cd circuitpython
+          git fetch origin "${{ env.cp-version }}" --depth=1
+          git checkout "${{ env.cp-version }}"
+          cd ..
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -298,10 +348,17 @@ jobs:
           echo >> $GITHUB_ENV "EX=$EX"
           echo >> $GITHUB_ENV "OS=$OS"
 
+      #- name: Upload artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: mpy-cross.${{ env.EX }}
+      #    path: circuitpython/mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
+      #    retention-days: 8
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross.${{ env.EX }}
+          name: mpy-cross-${{ env.OS }}-${{ env.cp-version }}.${{ env.EX }}
           path: circuitpython/mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
           retention-days: 8
 
