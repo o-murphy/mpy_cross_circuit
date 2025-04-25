@@ -58,5 +58,6 @@ jobs:
         cp_version: ${{ fromJson(needs.cp_versions.outputs.all_versions) }}
 
     steps:
-      - name: echo
-        run: echo {{env.cp_version}}
+      - name: Echo version
+        run: |
+          echo "Checking version: ${{ matrix.cp_version }}"
