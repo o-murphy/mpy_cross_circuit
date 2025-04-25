@@ -115,7 +115,11 @@ jobs:
             if ($env:RUNNER_OS -eq "Windows") {
               make -C ./circuitpython/mpy-cross clean
               ${CRS:-}make -C ./circuitpython/mpy-cross
-              Copy-Item "./circuitpython/mpy-cross/build/mpy-cross${env:EXT}" "../archive/windows/$env:ARCH/$version/mpy-cross${env:EXT}" -Force
+              $sourcePath = "./circuitpython/mpy-cross/build/mpy-cross${env:EXT}"
+              $destinationDir = Join-Path -Path "../archive/windows/$env:ARCH" -ChildPath "$version"
+              mkdir -p $destinationDir
+              $destinationPath = Join-Path -Path $destinationDir -ChildPath "mpy-cross${env:EXT}"
+              Copy-Item -Path $sourcePath -Destination $destinationPath -Force
             }
 
             cd .. # Go back to the root directory
