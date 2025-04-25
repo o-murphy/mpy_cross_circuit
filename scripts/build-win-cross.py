@@ -5,7 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 versions_json = os.environ.get('VERSIONS', '[]')
 versions = json.loads(versions_json)
 runner_os = os.environ.get('RUNNER_OS')
@@ -47,11 +46,11 @@ for version in versions:
         if runner_os == 'Windows':
             subprocess.run([make_command, '-C', './circuitpython/mpy-cross', 'clean'], check=True)
             subprocess.run([crs, make_command, '-C', './circuitpython/mpy-cross'], check=True)
-            source_file = f"./circuitpython/mpy-cross/build/mpy-cross{ext}"
-            destination_dir = os.path.join("archive", "windows", arch, version)
+            source_file = Path(f"./circuitpython/mpy-cross/build/mpy-cross{ext}")
+            destination_dir = root_dir / "archive" / "windows" / arch / version
             os.makedirs(destination_dir, exist_ok=True)
-            destination_path = os.path.join(destination_dir, f"mpy-cross{ext}")
-            if os.path.exists(source_file):
+            destination_path = destination_dir / f"mpy-cross{ext}"
+            if source_file.exists():
                 shutil.copy2(source_file, destination_path)
                 print(f"Copied {source_file} to {destination_path}")
             else:
