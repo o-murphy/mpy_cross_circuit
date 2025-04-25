@@ -104,3 +104,4 @@ jobs:
           name: mpy-cross-windows-${{ matrix.arch }}
           path: archive/windows/${{ matrix.arch }}/**
           retention-days: 8
+          if-no-files-found: error
