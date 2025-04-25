@@ -56,3 +56,7 @@ jobs:
     strategy:
       matrix:
         cp_version: ${{ fromJson(needs.cp_versions.outputs.all_versions) }}
+
+    steps:
+      - name: echo
+        run: echo {{env.cp_version}}
