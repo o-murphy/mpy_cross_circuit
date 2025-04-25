@@ -54,7 +54,6 @@ jobs:
       - name: Install build dependencies (Windows)
         run: |
           python -m pip install huffman
-          # choco install make
           echo "You may need to adjust your Windows toolchain (MSVC or MinGW)"
 
       # Set Windows i386 environment
