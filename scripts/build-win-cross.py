@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import shutil
 import subprocess
 from pathlib import Path
@@ -24,7 +25,7 @@ elif runner_os == 'Linux' or runner_os == 'macOS':
     make_command = 'make'
 else:
     print(f"Unsupported OS: {runner_os}")
-    exit(1)
+    sys.exit(1)
 
 for version in versions:
     print(f"\nBuilding for CircuitPython version: {version}")
@@ -63,5 +64,8 @@ for version in versions:
     except Exception as e:
         print(f"An unexpected error occurred while building version {version}: {e}")
         print(f"Continuing to the next version.")
+
+    for filename in glob.glob(os.path.join("archive", "windows", arch, version)):
+        print(filename)
 
 print("Build process completed for all versions.")
