@@ -94,37 +94,13 @@ jobs:
         run: echo "VERSIONS=${{ needs.cp_versions.outputs.all_versions }}" >> "$GITHUB_ENV"
 
       - name: Build for each CircuitPython version
-        run: |
-          mkdir -p archive/windows/$env:ARCH # Create architecture-specific directory
-          $env:VERSIONS | ConvertFrom-Json | ForEach-Object {
-            $version = $_
-            Write-Host "Building for CircuitPython version: $version"
-
-            # Create a directory for the current version
-            mkdir -p build_$version
-            cd build_$version
-
-            # Sync submodule to the specific version
-            git submodule update --init
-            cd ./circuitpython
-            git fetch origin "$version" --depth=1
-            git checkout "$version"
-            cd ..
-
-            # Build mpy-cross
-            if ($env:RUNNER_OS -eq "Windows") {
-              make -C ./circuitpython/mpy-cross clean
-              ${CRS:-}make -C ./circuitpython/mpy-cross
-              $sourcePath = "./circuitpython/mpy-cross/build/mpy-cross${env:EXT}"
-              $destinationDir = Join-Path -Path "../archive/windows/$env:ARCH" -ChildPath "$version"
-              mkdir -p $destinationDir
-              $destinationPath = Join-Path -Path $destinationDir -ChildPath "mpy-cross${env:EXT}"
-              Copy-Item -Path $sourcePath -Destination $destinationPath -Force
-            }
-
-            cd .. # Go back to the root directory
-          }
-        shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+        run: python scripts/build_and_copy.py
+        env:
+          VERSIONS: ${{ needs.cp_versions.outputs.all_versions }}
+          RUNNER_OS: ${{ runner.os }}
+          ARCH: ${{ env.ARCH }}
+          EXT: ${{ env.EXT }}
+          CRS: ${{ env.CRS }}
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
