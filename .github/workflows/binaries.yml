@@ -357,17 +357,10 @@ jobs:
           echo >> $GITHUB_ENV "EX=$EX"
           echo >> $GITHUB_ENV "OS=$OS"
 
-      #- name: Upload artifact
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: mpy-cross.${{ env.EX }}
-      #    path: circuitpython/mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
-      #    retention-days: 8
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mpy-cross-${{ env.OS }}-${{ matrix.cp_version }}.${{ env.EX }}
+          name: mpy-cross.${{ env.OS }}-${{ matrix.cp_version }}.${{ env.EX }}
           path: circuitpython/mpy-cross/build-${{ matrix.mpy-cross }}/mpy-cross.${{ env.EX }}
           retention-days: 8
 
