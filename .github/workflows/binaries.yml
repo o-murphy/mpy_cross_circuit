@@ -37,6 +37,7 @@ jobs:
   build-windows:
     name: Build on windows
     runs-on: windows-latest
+    continue-on-error: true
     needs: cp_versions
     strategy:
       matrix:
@@ -126,6 +127,7 @@ jobs:
   build-linux:
     name: Build on linux
     runs-on: ubuntu-latest
+    continue-on-error: true
     needs: cp_versions
     strategy:
       matrix:
@@ -228,6 +230,7 @@ jobs:
   build-macos:
     name: Build on macOS
     runs-on: macos-13
+    continue-on-error: true
     needs: cp_versions
     strategy:
       matrix:
@@ -300,6 +303,7 @@ jobs:
   build-static:
     name: Build static
     runs-on: ubuntu-24.04
+    continue-on-error: true
     needs: cp_versions
     strategy:
       fail-fast: false
@@ -379,6 +383,7 @@ jobs:
       - build-linux
       - build-macos
       - build-static
+    if: always()  # Ensures it runs even if a build job fails
 
     steps:
       - name: Create directory to collect artifacts
