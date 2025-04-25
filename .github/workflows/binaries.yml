@@ -20,6 +20,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies (semver)
+        run: |
+          pip install semver
+
       - name: Determine mpy-cross versions
         id: get_cp_versions
         run: |
