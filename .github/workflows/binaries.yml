@@ -50,9 +50,9 @@ jobs:
 
       - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init --depth 1
+          git submodule update --init
           cd circuitpython
-          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git fetch origin "${{ matrix.cp_version }}"
           git checkout "${{ matrix.cp_version }}"
           cd ..
 
@@ -102,10 +102,6 @@ jobs:
       - name: Build mpy-cross (Windows)
         run: |
           ${CRS:-}make -C circuitpython/mpy-cross
-          # mv circuitpython/mpy-cross/build/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
-          # mv circuitpython/mpy-cross/mpy-cross${EXT:-} ./mpy-cross${EXT:-} || \
-          # mv circuitpython/mpy-cross/mpy-cross ./mpy-cross${EXT:-}
-          # file ./mpy-cross${EXT:-}
         continue-on-error: true  # same as allow_failure
         shell: bash
 
@@ -140,9 +136,9 @@ jobs:
 
       - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init --depth 1
+          git submodule update --init
           cd circuitpython
-          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git fetch origin "${{ matrix.cp_version }}"
           git checkout "${{ matrix.cp_version }}"
           cd ..
 
@@ -243,9 +239,9 @@ jobs:
 
       - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init --depth 1
+          git submodule update --init
           cd circuitpython
-          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git fetch origin "${{ matrix.cp_version }}"
           git checkout "${{ matrix.cp_version }}"
           cd ..
 
@@ -324,9 +320,9 @@ jobs:
 
       - name: Sync submodule to mpy_version
         run: |
-          git submodule update --init --depth 1
+          git submodule update --init
           cd circuitpython
-          git fetch origin "${{ matrix.cp_version }}" --depth=1
+          git fetch origin "${{ matrix.cp_version }}"
           git checkout "${{ matrix.cp_version }}"
           cd ..
 
