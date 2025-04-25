@@ -39,8 +39,8 @@ jobs:
             echo "Error: No versions found by mpy_cross_circuit/versions.py"
             exit 1
           fi
-          # Split the output into an array, handling potential newlines
-          IFS=' ' read -r -d '' -a versions_array <<< "$versions"
+          # Split the output into an array, handling potential newlines and extra spaces
+          versions_array=($(echo "$versions" | tr -s ' '))
 
           # Join the array elements with spaces
           versions_string=$(IFS=' '; echo "${versions_array[*]}")
